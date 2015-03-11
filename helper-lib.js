@@ -65,6 +65,24 @@ HelperLib = {
       return {};
     }
   },
+  "selected": function(x){
+    if (x) {
+      return {
+        selected: true
+      };
+    } else {
+      return {};
+    }
+  },
+  "selectedEq": function(a, b){
+    if (a === b){
+      return {
+        selected: true
+      }
+    } else {
+      return {};
+    }
+  },
   "notDisabled": function (x) {
     if (x) {
       return {};

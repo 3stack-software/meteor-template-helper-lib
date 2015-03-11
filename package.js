@@ -1,6 +1,6 @@
 Package.describe({
   name: '3stack:template-helper-lib',
-  version: '0.0.1',
+  version: '0.0.2',
   summary: 'A collection of template helpers (Logical, Classes, Dates).',
   git: 'https://github.com/3stack-software/meteor-template-helper-lib',
   documentation: 'README.md'
