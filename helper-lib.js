@@ -1,123 +1,107 @@
 "use strict";
 
 HelperLib = {
-  "or": function (value, instead) {
-    return value != null ? value : instead;
-  },
-  "loggedIn": function () {
-    return Meteor.userId() != null;
-  },
-  "prop": function (obj, k) {
-    return obj[k];
-  },
-  "propOr": function (obj, k, instead) {
-    if ((obj != null) && k in obj && (obj[k] != null)) {
-      return obj[k];
+  "op": function(leftOperand, operator, rightOperand, kwargs){
+    var result;
+    switch (operator){
+      case 'eq':
+        result = leftOperand === rightOperand;
+        break;
+      case 'ne':
+      case 'neq':
+        result = leftOperand !== rightOperand;
+        break;
+      case 'gt':
+        result = leftOperand > rightOperand;
+        break;
+      case 'gte':
+        result = leftOperand >= rightOperand;
+        break;
+      case 'lt':
+        result = leftOperand < rightOperand;
+        break;
+      case 'lte':
+        result = leftOperand <= rightOperand;
+        break;
+      case 'or':
+        result = leftOperand || rightOperand;
+        break;
+      case 'and':
+        result = leftOperand && rightOperand;
+        break;
+      case 'ejson':
+        result = EJSON.equals(leftOperand, rightOperand);
+        break;
+      case 'nejson':
+        result = !EJSON.equals(leftOperand, rightOperand);
+        break;
+      case 'in':
+        result = _.indexOf(rightOperand, leftOperand) !== -1;
+        break;
+      case 'nin':
+        result = _.indexOf(rightOperand, leftOperand) === -1;
+        break;
+      default:
+        throw new Exception('Unhandled operation ' + operator);
+        break;
+    }
+    if (result){
+      return kwargs.hash;
     } else {
-      return instead;
+      return null;
     }
   },
-  "arrayJoin": function (array, glue) {
-    return array != null ? array.join(glue) : void 0;
-  },
-  "arrayGtLen": function (array, size) {
-    return (array != null ? array.length : void 0) > size;
-  },
-  "arrayGteLen": function (array, size) {
-    return (array != null ? array.length : void 0) >= size;
-  },
-  "arrayLtLen": function (array, size) {
-    return (array != null ? array.length : void 0) < size;
-  },
-  "arrayLteLen": function (array, size) {
-    return (array != null ? array.length : void 0) <= size;
-  },
-  "arrayEqLen": function (array, size) {
-    return (array != null ? array.length : void 0) === size;
-  },
-  "eq": function (a, b) {
-    return a === b;
-  },
-  "checked": function (x) {
-    if (x) {
-      return {
-        checked: true
-      };
+  "uop": function(operator, operand, kwargs){
+    var result;
+    switch (operator){
+      case 'truthy':
+        result = !!operand;
+        break;
+      case 'falsey':
+        result = !operand;
+        break;
+      case 'empty':
+        result = operand == null;
+        break;
+      case 'notEmpty':
+        result = operand != null;
+        break;
+      default:
+        throw new Exception('Unhandled operation ' + operator);
+        break;
+    }
+    if (result){
+      return kwargs.hash;
     } else {
-      return {};
+      return null;
     }
   },
-  "notChecked": function (x) {
-    if (x) {
-      return {};
+  "truthy": function(operand, kwargs){
+    if (!!operand){
+      return kwargs.hash;
     } else {
-      return {
-        checked: true
-      };
+      return null;
     }
   },
-  "disabled": function (x) {
-    if (x) {
-      return {
-        disabled: true
-      };
+  "falsey": function(operand, kwargs){
+    if (!operand){
+      return kwargs.hash;
     } else {
-      return {};
+      return null;
     }
   },
-  "selected": function(x){
-    if (x) {
-      return {
-        selected: true
-      };
+  "empty": function(operand, kwargs){
+    if (operand == null){
+      return kwargs.hash;
     } else {
-      return {};
+      return null;
     }
   },
-  "selectedEq": function(a, b){
-    if (a === b){
-      return {
-        selected: true
-      }
+  "notEmpty": function(operand, kwargs){
+    if (operand != null){
+      return kwargs.hash;
     } else {
-      return {};
-    }
-  },
-  "notDisabled": function (x) {
-    if (x) {
-      return {};
-    } else {
-      return {
-        disabled: true
-      };
-    }
-  },
-  "disabledClass": function (x) {
-    if (x) {
-      return ' disabled';
-    } else {
-      return '';
-    }
-  },
-  "notDisabledClass": function (x) {
-    if (x) {
-      return '';
-    } else {
-      return ' disabled';
-    }
-  },
-  "activeClass": function (x) {
-    if (x) {
-      return ' active';
-    } else {
-      return '';
-    }
-  },
-  "notActiveClass": function (x) {
-    if (x) {
-      return '';
-    } else {
-      return ' active';
+      return null;
     }
   },
   "fileSizeFormat": function (fileSizeInBytes) {
@@ -132,9 +116,13 @@ HelperLib = {
     }
     return text.charAt(0).toUpperCase() + text.slice(1);
   },
-  "placeholder": function (text, placeholder) {
+  "placeholder": function (text, placeholder, kwargs) {
     if (!text) {
-      return new Spacebars.SafeString("<span class=\"placeholder\">" + (_.escape(placeholder)) + "</span>");
+      if (kwargs.hash.html){
+        return new Spacebars.SafeString("<span class=\"placeholder\">" + (_.escape(placeholder)) + "</span>");
+      } else {
+        return placeholder;
+      }
     } else {
       return text;
     }
@@ -155,8 +143,8 @@ if (Package['momentjs:moment'] != null) {
   moment = Package['momentjs:moment'].moment;
 
   _.extend(HelperLib, {
-    DATE_FORMAT: 'DD/MM/YYYY',
-    DATE_TIME_FORMAT: 'DD/MM/YYYY h:mm A',
+    SHORT_DATE_FORMAT: 'DD/MM/YYYY',
+    LONG_DATE_FORMAT: 'DD/MM/YYYY h:mm A',
 
     "formatTimestampCalendar": function (ts, placeholder) {
       var momentTs = makeMoment(ts);
@@ -176,7 +164,7 @@ if (Package['momentjs:moment'] != null) {
       if (momentTs == null) {
         return placeholder;
       }
-      return momentTs.format(HelperLib.DATE_FORMAT);
+      return momentTs.format(HelperLib.SHORT_DATE_FORMAT);
     },
     "formatTimestampDateTime": function (ts, placeholder) {
       var momentTs = makeMoment(ts);
@@ -186,7 +174,7 @@ if (Package['momentjs:moment'] != null) {
       if (momentTs == null) {
         return placeholder;
       }
-      return momentTs.format(HelperLib.DATE_TIME_FORMAT);
+      return momentTs.format(HelperLib.LONG_DATE_FORMAT);
 
     },
     "timestampRanges": {
