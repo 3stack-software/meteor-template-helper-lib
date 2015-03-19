@@ -132,7 +132,6 @@ HelperLib = {
 var moment;
 
 function makeMoment(ts) {
-  var momentTs;
   if ((ts == null) || ts === '') {
     return;
   }
@@ -143,10 +142,12 @@ if (Package['momentjs:moment'] != null) {
   moment = Package['momentjs:moment'].moment;
 
   _.extend(HelperLib, {
-    SHORT_DATE_FORMAT: 'DD/MM/YYYY',
-    LONG_DATE_FORMAT: 'DD/MM/YYYY h:mm A',
+    DATE_FORMATS: {
+      LONG: 'DD/MM/YYYY h:mm A',
+      SHORT: 'DD/MM/YYYY'
+    },
 
-    "formatTimestampCalendar": function (ts, placeholder) {
+    "dateFormatCalendar": function (ts, placeholder) {
       var momentTs = makeMoment(ts);
       if (placeholder == null) {
         placeholder = '';
@@ -156,7 +157,10 @@ if (Package['momentjs:moment'] != null) {
       }
       return momentTs.calendar();
     },
-    "formatTimestampDate": function (ts, placeholder) {
+    "dateFormat": function(fmt, ts, placeholder){
+      if (HelperLib.DATE_FORMATS[fmt] == null){
+        throw new Exception('Unknown date format ' + fmt);
+      }
       var momentTs = makeMoment(ts);
       if (placeholder == null) {
         placeholder = '';
@@ -164,24 +168,20 @@ if (Package['momentjs:moment'] != null) {
       if (momentTs == null) {
         return placeholder;
       }
-      return momentTs.format(HelperLib.SHORT_DATE_FORMAT);
+      return momentTs.format(HelperLib.DATE_FORMATS[fmt]);
     },
-    "formatTimestampDateTime": function (ts, placeholder) {
-      var momentTs = makeMoment(ts);
-      if (placeholder == null) {
-        placeholder = '';
-      }
-      if (momentTs == null) {
-        return placeholder;
-      }
-      return momentTs.format(HelperLib.LONG_DATE_FORMAT);
+    "dateFormatShort": function (ts, placeholder) {
+      return HelperLib.dateFormat('SHORT', ts, placeholder);
+    },
+    "dateFormatLong": function (ts, placeholder) {
+      return HelperLib.dateFormat('LONG', ts, placeholder);
 
     },
     "timestampRanges": {
       "default": [
-        {props: {title: "More than 3 days left", style: 'color:auto;'}, $lte: Infinity, $gt: (86400 * 3)},
-        {props: {title: "Less than 3 days left", style: 'color:#d58512;'}, $lte: (86400 * 3), $gt: 0},
-        {props: {title: "Overdue", style: 'color:#d9534f;'}, $lte: 0, $gt: -Infinity}
+        {props: {title: "More than 3 days left", style: 'color:auto;'}, $between: [(86400 * 3), Infinity]},
+        {props: {title: "Less than 3 days left", style: 'color:#d58512;'}, $between: [0, (86400 * 3)]},
+        {props: {title: "Overdue", style: 'color:#d9534f;'}, $between: [-Infinity, 0] }
       ]
     },
     "timestampRange": function (ts, rangeType) {
@@ -195,10 +195,22 @@ if (Package['momentjs:moment'] != null) {
       delta = momentTs.diff(moment(), 'seconds');
 
       return _.find(HelperLib.timestampRanges[rangeType], function (r) {
-        return r.$gt < delta && delta <= r.$lte;
+        var $between = r.$between, $gt = $between[0], $lte = $between[1];
+        return $gt < delta && delta <= $lte;
       });
     }
   });
+
+  _.each({
+    "dateFormatCalendar": "formatTimestampCalendar",
+    "dateFormatShort": "formatTimestampDate",
+    "dateFormatLong": "formatTimestampDateTime"
+  }, function(oldName, newName){
+    HelperLib[oldName] = function(ts, placeholder){
+      Log.warn("Warning: HelperLib." + oldName + " is deprecated, please use " + newName + "instead");
+      return HelperLib[newName](ts, placeholder);
+    }
+  })
 }
 
 if (Meteor.isClient) {

@@ -1,6 +1,6 @@
 Package.describe({
   name: '3stack:template-helper-lib',
-  version: '0.1.0',
+  version: '0.1.2',
   summary: 'A collection of template helpers (Logical, Classes, Dates).',
   git: 'https://github.com/3stack-software/meteor-template-helper-lib',
   documentation: 'README.md'
@@ -13,6 +13,7 @@ Package.onUse(function(api){
   api.versionsFrom('METEOR@0.9.2');
   api.export('HelperLib');
   api.use([
+    'logging',
     'underscore',
     'blaze',
     'spacebars',

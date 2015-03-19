@@ -7,10 +7,21 @@ A collection of helpers for templates.
 Usage
 ---------------------
 
-###op
+### op (binary / two argument)
+```handlebars
+{{! Use to return kwargs/hash values for properties, or a #with block}}
+<div {{op left operator right prop=value}} />
 
-```
-{{op left operator right hash=value}}
+{{#with op left operator right a=1 b=2}}
+  {{a}} + {{a}} = {{b}}
+{{/with}}
+
+{{! OR, in a conditional}}
+{{#if op left operator right}}
+  eval true
+{{else}}
+  eval false
+{{/if}}
 ```
 
 Evaluates left & right with operator, returning all keyword arguments.
@@ -30,32 +41,51 @@ or, to mark a radio checked:
 <input type="radio" {{op selectedRadio 'eq' _id checked=true}} />
 ```
 
-for a full list of operators, read the source
+Operators available
 
-###uop
+ * `eq` - equals
+ * `ne`, `neq` - not equals
+ * `gt` - greater than
+ * `gte` - greater than, or equal
+ * `lt` - less than
+ * `lte` - less than, or equal
+ * `or` - `left || right`
+ * `and` - `left && right`
+ * `ejson` - `EJSON.equals(left, right)`
+ * `nejson` - `!EJSON.equals(left, right)`
+ * `in` - `right.indexOf(left) !== -1`
+ * `nin` - `right.indexOf(left) === -1`
 
-```
+
+### uop (unary / single argument)
+
+```handlebars
 {{uop operator operand}}
 ```
 
 or shorthand:
 
-```
+```handlebars
 {{<operator> operand}}
 ```
 
-operators are `truthy`, `falsey`, `empty`, `notEmpty`.
+operators are:
 
-###filesizeFormat
+ * `truthy` - `if(value)`
+ * `falsey` - `if(!value)`
+ * `empty`  - `if(value == null)`
+ * `notEmpty` - `if (value != null)`
+
+### filesizeFormat
 
 Formats bytes as human readable amount.
 
-###capitalize
+### capitalize
 
 Converts the first character to uppercase
 
 
-###placeholder
+### placeholder
 
 Puts a placeholder span if the current value is falsey
 
@@ -68,33 +98,40 @@ Puts a placeholder span if the current value is falsey
 
 If the package `momentjs:moment` is available, the following helpers can be used:
 
- * `HelperLib.SHORT_DATE_FORMAT` - set to your preferred date format, defaults to `'DD/MM/YYYY'`
+### Date formatting
 
- * `HelperLib.LONG_DATE_FORMAT` - likewise , defaults to: `'DD/MM/YYYY h:mm A'`
+ * `HelperLib.DATE_FORMATS[NAME]` - insert new date formats by name, defaults for `LONG` and `SHORT`
 
-### dateFormatCalendar(date, placeholder)
+ * `dateFormatCalendar(date, placeholder)` - performs `moment.calendar()`
 
-### dateFormatShort(date, placeholder)
+ * `dateFormat(NAME, date, placeholder)` - looks up the date format name in `DATE_FORMATS`
 
-### dateFormatLong(date, placeholder)
+ * `dateFormatShort(date, placeholder)` - formats as per `DATE_FORMATS.SHORT` - defaults to `'DD/MM/YYYY'`
+
+ * `dateFormatLong(date, placeholder)` - formats as per `DATE_FORMATS.LONG` - defaults to `'DD/MM/YYYY h:mm A'`
 
 
-### timestampRange(date, rangeType)
+### Temporal Highlighting
 
-configure `HelperLib.timestampRanges.(rangeType)` with your rules
+Need to highlight an element based on it's age? use-
 
-Will return the corresponding rule where `$gt < (now - date) < $lte` is true
+`timestampRange(date, rangeType)`
+
+configure `HelperLib.timestampRanges[rangeType]` with your rules
+
+Will return the corresponding rule where `$between[0] < (now - date) < $between[1]` is true
 
 eg.
 
 ```js
 HelperLib.timestampRanges.myranges = [
-  /*0*/ {props: {title: "More than 3 days left", style: 'color:auto;'}, $lte: Infinity, $gt: (86400 * 3)},
-  /*1*/ {props: {title: "Less than 3 days left", style: 'color:#d58512;'}, $lte: (86400 * 3), $gt: 0},
-  /*2*/ {props: {title: "Overdue", style: 'color:#d9534f;'}, $lte: 0, $gt: -Infinity}
+  /* 0 */ {props: {title: "More than 3 days left", style: 'color:auto;'}, $between: [(86400 * 3), Infinity]},
+  /* 1 */ {props: {title: "Less than 3 days left", style: 'color:#d58512;'}, $between: [0, (86400 * 3)]},
+  /* 2 */ {props: {title: "Overdue", style: 'color:#d9534f;'}, $between: [-Infinity, 0] }
 ]
 
+// finds the entry in 'myranges' where (2 days) is within `$between`
+// result  /*1*/ {props: {title: "Less than 3 days left", style: 'color:#d58512;'}, $between: [0, (86400 * 3)]},
 console.log(HelperLib.timestampRange(new Date() - (86400 * 2), 'myranges'))
-// returns element 1
 ```
 
