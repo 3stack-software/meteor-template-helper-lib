@@ -42,7 +42,7 @@ HelperLib = {
         result = _.indexOf(rightOperand, leftOperand) === -1;
         break;
       default:
-        throw new Exception('Unhandled operation ' + operator);
+        throw new Error('Unhandled operation ' + operator);
         break;
     }
     if (result){
@@ -67,7 +67,7 @@ HelperLib = {
         result = operand != null;
         break;
       default:
-        throw new Exception('Unhandled operation ' + operator);
+        throw new Error('Unhandled operation ' + operator);
         break;
     }
     if (result){
@@ -144,7 +144,8 @@ if (Package['momentjs:moment'] != null) {
   _.extend(HelperLib, {
     DATE_FORMATS: {
       LONG: 'DD/MM/YYYY h:mm A',
-      SHORT: 'DD/MM/YYYY'
+      SHORT: 'DD/MM/YYYY',
+      TIME: 'h:mm A'
     },
 
     "dateFormatCalendar": function (ts, placeholder) {
@@ -159,7 +160,7 @@ if (Package['momentjs:moment'] != null) {
     },
     "dateFormat": function(fmt, ts, placeholder){
       if (HelperLib.DATE_FORMATS[fmt] == null){
-        throw new Exception('Unknown date format ' + fmt);
+        throw new Error('Unknown date format ' + fmt);
       }
       var momentTs = makeMoment(ts);
       if (placeholder == null) {
@@ -175,7 +176,9 @@ if (Package['momentjs:moment'] != null) {
     },
     "dateFormatLong": function (ts, placeholder) {
       return HelperLib.dateFormat('LONG', ts, placeholder);
-
+    },
+    "dateFormatTime": function(ts, placeholder){
+      return HelperLib.dateFormat('TIME', ts, placeholder);
     },
     "timestampRanges": {
       "default": [
