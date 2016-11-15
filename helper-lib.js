@@ -156,7 +156,9 @@ if (Package['momentjs:moment'] != null) {
       if (momentTs == null) {
         return placeholder;
       }
-      return momentTs.calendar();
+      return momentTs.calendar(null, {
+        sameElse: HelperLib.DATE_FORMATS.SHORT
+      });
     },
     "dateFormat": function(fmt, ts, placeholder){
       if (HelperLib.DATE_FORMATS[fmt] == null){
